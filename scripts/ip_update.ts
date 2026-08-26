@@ -6,7 +6,7 @@ function getWindowsHostIP(): string {
   const resolvConf = fs.readFileSync("/etc/resolv.conf", "utf-8");
   const match = resolvConf.match(/nameserver\s+([\d.]+)/);
   if (!match) {
-    throw new Error("Could not find nameserver IP in /etc/resolv.conf");
+    throw new Error("IP not in /etc/resolv.conf");
   }
   return match[1];
 }
