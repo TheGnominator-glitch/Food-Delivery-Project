@@ -147,3 +147,11 @@ CREATE TABLE notification_queue (
     sent_at DATE,
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
+
+CREATE TABLE sessions (
+    id VARCHAR2(255) PRIMARY KEY,
+    user_id VARCHAR2(20) NOT NULL,
+    created_at DATE DEFAULT SYSDATE NOT NULL,
+    expires_at DATE NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
