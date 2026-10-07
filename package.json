@@ -9,14 +9,16 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "dotenv": "^17.4.2",
-    "next": "16.3.0",
+    "next": "^16.3.8",
     "oracledb": "^7.0.1",
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/bcrypt": "^6.0.0",
     "@types/node": "^20",
     "@types/oracledb": "^7.0.2",
     "@types/react": "^19",
@@ -30,6 +32,7 @@
   "allowScripts": {
     "oracledb@7.0.1": true,
     "unrs-resolver@1.12.2": true,
-    "esbuild@0.28.2": true
+    "esbuild@0.28.2": true,
+    "bcrypt@6.0.0": true
   }
 }
