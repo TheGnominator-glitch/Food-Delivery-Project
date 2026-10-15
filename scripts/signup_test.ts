@@ -8,8 +8,9 @@ let passed = 0;
 let failed = 0;
 let db: oracledb.Connection;
 
+const ipPrefix = `10.${1 + Math.floor(Math.random() * 250)}.${1 + Math.floor(Math.random() * 250)}`;
 let ipCounter = 0;
-const nextIp = () => `10.20.30.${++ipCounter}`;
+const nextIp = () => `${ipPrefix}.${++ipCounter}`;
 
 const rand = () => Math.random().toString(36).slice(2, 10).toUpperCase();
 
@@ -73,18 +74,17 @@ async function main() {
     await expectStatus("EP-4", "required field missing (no name)", validBody({ name: "" }), 400);
     await expectStatus("EP-5", "email already registered", validBody({ email: existing.email }), 409);
 
-    console.log("\n2. Boundary value analysis (phone: 7-15 digits)");
+    console.log("\n2. Boundary value analysis (phone: 7-15 digits, name: up to 120)");
 
     await expectStatus("BV-1", "6 digits (just below minimum)", validBody({ phone: "123456" }), 400);
     await expectStatus("BV-2", "7 digits (minimum)", validBody({ phone: "1234567" }), 201);
     await expectStatus("BV-3", "15 digits (maximum)", validBody({ phone: "1".repeat(15) }), 201);
     await expectStatus("BV-4", "16 digits (just above maximum)", validBody({ phone: "1".repeat(16) }), 400);
-    await expectStatus("BV-5", "name of 130 characters (column holds 120)", validBody({ name: "A".repeat(130) }), 400);
+    await expectStatus("BV-5", "name of 121 characters (just above the 120 maximum)", validBody({ name: "A".repeat(121) }), 400);
 
     console.log("\n3. Decision table (signup rules)");
 
     const dup = validBody();
-    await post(dup); 
 
     await expectStatus("D1", "fields missing -> 400", { id: "TST" + rand() }, 400);
     await expectStatus("D2", "format invalid -> 400", validBody({ email: "bad" }), 400);
