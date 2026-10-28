@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { id, name, email, password, phone, address, whatsappOptIn } = body;
+    const { id, name, email, password, phone, address, emailOptIn } = body;
 
     if (!id || !name || !email || !password || !phone || !address) {
       return NextResponse.json(
@@ -77,9 +77,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (whatsappOptIn !== undefined && typeof whatsappOptIn !== "boolean") {
+    if (emailOptIn !== undefined && typeof emailOptIn !== "boolean") {
       return NextResponse.json(
-        { error: "whatsappOptIn must be true or false" },
+        { error: "emailOptIn must be true or false" },
         { status: 400 }
       );
     }
@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
       passwordHash,
       phone,
       address,
-      whatsappOptIn: whatsappOptIn === true,
+      emailOptIn: emailOptIn === true,
     });
 
     return NextResponse.json(

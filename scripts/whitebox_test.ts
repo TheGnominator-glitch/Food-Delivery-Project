@@ -21,7 +21,7 @@ function validBody(overrides: Record<string, unknown> = {}): Record<string, unkn
     password: "Passw0rd!x",
     phone: "+573001234567",
     address: "Calle 14 #8-32, Pereira",
-    whatsappOptIn: true,
+    emailOptIn: true,
     ...overrides,
   };
 }
@@ -34,7 +34,7 @@ const MSG = {
   R5: "One or more fields are too long",
   R6: "Invalid email format",
   R7: "Invalid phone number format",
-  R8: "whatsappOptIn must be true or false",
+  R8: "emailOptIn must be true or false",
   R9: "Email already exists",
   R10: "Something went wrong creating your account",
   R11: "Account created successfully",
@@ -80,6 +80,7 @@ async function main() {
   await cleanup();
 
   try {
+
     const existing = validBody();
     await post(existing);
 
@@ -95,7 +96,7 @@ async function main() {
     check("CP-CB-05", "D1-D4(F) D5(T) -> R5", await post(validBody({ name: "A".repeat(121) })), 400, MSG.R5);
     check("CP-CB-06", "D1-D5(F) D6(T) -> R6", await post(validBody({ email: "bad" })), 400, MSG.R6);
     check("CP-CB-07", "D1-D6(F) D7(T) -> R7", await post(validBody({ phone: "12ab" })), 400, MSG.R7);
-    check("CP-CB-08", "D1-D7(F) D8(T) -> R8", await post(validBody({ whatsappOptIn: "false" })), 400, MSG.R8);
+    check("CP-CB-08", "D1-D7(F) D8(T) -> R8", await post(validBody({ emailOptIn: "false" })), 400, MSG.R8);
     check("CP-CB-09", "D1-D8(F) D9(T) -> R9", await post(validBody({ email: existing.email })), 409, MSG.R9);
 
     check("CP-CB-10", "D1-D9(F) D10(T) -> R10", await post(validBody({ id: existing.id })), 500, MSG.R10);
@@ -108,12 +109,12 @@ async function main() {
     check("MC-D3-3", "F T F (null)", await post(null, { raw: "null" }), 400, MSG.R3);
     check("MC-D3-4", "F F T (array)", await post([]), 400, MSG.R3);
 
-    console.log("\nMC/DC for D8: whatsappOptIn !== undefined && typeof whatsappOptIn !== 'boolean'");
+    console.log("\nMC/DC for D8: emailOptIn !== undefined && typeof emailOptIn !== 'boolean'");
     const absent = validBody();
-    delete absent.whatsappOptIn;
+    delete absent.emailOptIn;
     check("MC-D8-1", "F T (absent) -> accepted", await post(absent), 201, MSG.R11);
-    check("MC-D8-2", "T F (false) -> accepted", await post(validBody({ whatsappOptIn: false })), 201, MSG.R11);
-    check("MC-D8-3", 'T T (text "false") -> rejected', await post(validBody({ whatsappOptIn: "false" })), 400, MSG.R8);
+    check("MC-D8-2", "T F (false) -> accepted", await post(validBody({ emailOptIn: false })), 201, MSG.R11);
+    check("MC-D8-3", 'T T (text "false") -> rejected', await post(validBody({ emailOptIn: "false" })), 400, MSG.R8);
   } finally {
     await cleanup();
     await db.close();

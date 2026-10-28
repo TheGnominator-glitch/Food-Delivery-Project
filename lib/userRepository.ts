@@ -7,7 +7,7 @@ export interface NewUser {
   passwordHash: string;
   phone: string;
   address: string;
-  whatsappOptIn: boolean;
+  emailOptIn: boolean;
 }
 
 export async function emailExists(email: string): Promise<boolean> {
@@ -28,8 +28,8 @@ export async function createUser(user: NewUser): Promise<void> {
   const connection = await getConnection();
   try {
     await connection.execute(
-      `INSERT INTO users (id, name, email, password_hash, phone, address, whatsapp_opt_in)
-       VALUES (:id, :name, :email, :passwordHash, :phone, :address, :whatsappOptIn)`,
+      `INSERT INTO users (id, name, email, password_hash, phone, address, email_opt_in)
+       VALUES (:id, :name, :email, :passwordHash, :phone, :address, :emailOptIn)`,
       {
         id: user.id,
         name: user.name,
@@ -37,7 +37,7 @@ export async function createUser(user: NewUser): Promise<void> {
         passwordHash: user.passwordHash,
         phone: user.phone,
         address: user.address,
-        whatsappOptIn: user.whatsappOptIn ? 1 : 0,
+        emailOptIn: user.emailOptIn ? 1 : 0,
       },
       { autoCommit: true }
     );

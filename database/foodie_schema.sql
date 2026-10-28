@@ -6,7 +6,7 @@ CREATE TABLE users (
     phone VARCHAR2(20) NOT NULL,
     address VARCHAR2(255) NOT NULL,
     credit_balance NUMBER(10,2) DEFAULT 0 NOT NULL,
-    whatsapp_opt_in NUMBER(1) DEFAULT 0 NOT NULL CHECK (whatsapp_opt_in IN (0,1)),
+    email_opt_in NUMBER(1) DEFAULT 0 NOT NULL CHECK (email_opt_in IN (0,1)),
     created_at DATE DEFAULT SYSDATE NOT NULL
 );
 

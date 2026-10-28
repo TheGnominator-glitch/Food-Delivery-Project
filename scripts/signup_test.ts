@@ -22,7 +22,7 @@ function validBody(overrides: Record<string, unknown> = {}) {
     password: "Passw0rd!x",
     phone: "+573001234567",
     address: "Calle 14 #8-32, Pereira",
-    whatsappOptIn: true,
+    emailOptIn: true,
     ...overrides,
   };
 }
@@ -85,6 +85,7 @@ async function main() {
     console.log("\n3. Decision table (signup rules)");
 
     const dup = validBody();
+    await post(dup); 
 
     await expectStatus("D1", "fields missing -> 400", { id: "TST" + rand() }, 400);
     await expectStatus("D2", "format invalid -> 400", validBody({ email: "bad" }), 400);
@@ -125,10 +126,10 @@ async function main() {
       "201 and table intact",
       `${sqlRes.status} and table ${tableAlive ? "intact" : "MISSING"}`);
 
-    const optInBody = validBody({ whatsappOptIn: "false" });
+    const optInBody = validBody({ emailOptIn: "false" });
     await post(optInBody);
     const optInRow = await db.execute(
-      "SELECT whatsapp_opt_in FROM users WHERE id = :id",
+      "SELECT email_opt_in FROM users WHERE id = :id",
       { id: optInBody.id }
     );
     const optInStored = (optInRow.rows as unknown[][])[0]?.[0];
