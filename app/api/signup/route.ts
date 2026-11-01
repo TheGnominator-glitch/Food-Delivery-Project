@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcrypt";
-import { emailExists, createUser } from "@/lib/userRepository";
+import { emailExists, idExists, createUser } from "@/lib/userRepository";
 import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
+import { createSession, SESSION_COOKIE, sessionCookieOptions } from "@/lib/session";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_REGEX = /^\+?[0-9]{7,15}$/;
@@ -63,6 +64,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // NFR-5: format validation
     if (!EMAIL_REGEX.test(email)) {
       return NextResponse.json(
         { error: "Invalid email format" },
@@ -77,6 +79,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (
+      typeof password !== "string" ||
+      password.length < 8 ||
+      Buffer.byteLength(password, "utf8") > 72
+    ) {
+      return NextResponse.json(
+        { error: "Password must be between 8 and 72 characters" },
+        { status: 400 }
+      );
+    }
+
     if (emailOptIn !== undefined && typeof emailOptIn !== "boolean") {
       return NextResponse.json(
         { error: "emailOptIn must be true or false" },
@@ -84,10 +97,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const alreadyExists = await emailExists(email);
-    if (alreadyExists) {
+    const normalizedEmail = String(email).toLowerCase();
+    if (await emailExists(normalizedEmail)) {
       return NextResponse.json(
         { error: "Email already exists" },
+        { status: 409 }
+      );
+    }
+
+    if (await idExists(id)) {
+      return NextResponse.json(
+        { error: "National ID already exists" },
         { status: 409 }
       );
     }
@@ -97,17 +117,20 @@ export async function POST(request: NextRequest) {
     await createUser({
       id,
       name,
-      email,
+      email: normalizedEmail,
       passwordHash,
       phone,
       address,
       emailOptIn: emailOptIn === true,
     });
 
-    return NextResponse.json(
+    const token = await createSession(id);
+    const response = NextResponse.json(
       { message: "Account created successfully" },
       { status: 201 }
     );
+    response.cookies.set(SESSION_COOKIE, token, sessionCookieOptions);
+    return response;
   } catch (err) {
     console.error("Signup error:", err);
     return NextResponse.json(

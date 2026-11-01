@@ -59,6 +59,7 @@ async function main() {
   });
 
   const cleanup = async () => {
+    await db.execute("DELETE FROM sessions WHERE user_id LIKE 'TST%'");
     await db.execute("DELETE FROM users WHERE id LIKE 'TST%'");
     await db.commit();
   };

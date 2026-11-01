@@ -34,10 +34,12 @@ const MSG = {
   R5: "One or more fields are too long",
   R6: "Invalid email format",
   R7: "Invalid phone number format",
-  R8: "emailOptIn must be true or false",
-  R9: "Email already exists",
-  R10: "Something went wrong creating your account",
-  R11: "Account created successfully",
+  R8: "Password must be between 8 and 72 characters",
+  R9: "emailOptIn must be true or false",
+  R10: "Email already exists",
+  R11: "National ID already exists",
+  R12: "Something went wrong creating your account",
+  R13: "Account created successfully",
 };
 
 interface Reply {
@@ -74,17 +76,17 @@ async function main() {
   });
 
   const cleanup = async () => {
+    await db.execute("DELETE FROM sessions WHERE user_id LIKE 'TST%'");
     await db.execute("DELETE FROM users WHERE id LIKE 'TST%'");
     await db.commit();
   };
   await cleanup();
 
   try {
-
     const existing = validBody();
     await post(existing);
 
-    console.log("\nBasis paths (V(G) = 11)");
+    console.log("\nBasis paths (V(G) = 13)");
 
     const ip = nextIp();
     for (let i = 0; i < 5; i++) await post({}, { ip });
@@ -96,12 +98,14 @@ async function main() {
     check("CP-CB-05", "D1-D4(F) D5(T) -> R5", await post(validBody({ name: "A".repeat(121) })), 400, MSG.R5);
     check("CP-CB-06", "D1-D5(F) D6(T) -> R6", await post(validBody({ email: "bad" })), 400, MSG.R6);
     check("CP-CB-07", "D1-D6(F) D7(T) -> R7", await post(validBody({ phone: "12ab" })), 400, MSG.R7);
-    check("CP-CB-08", "D1-D7(F) D8(T) -> R8", await post(validBody({ emailOptIn: "false" })), 400, MSG.R8);
-    check("CP-CB-09", "D1-D8(F) D9(T) -> R9", await post(validBody({ email: existing.email })), 409, MSG.R9);
+    check("CP-CB-08", "D1-D7(F) D8(T) -> R8", await post(validBody({ password: "short1" })), 400, MSG.R8);
+    check("CP-CB-09", "D1-D8(F) D9(T) -> R9", await post(validBody({ emailOptIn: "false" })), 400, MSG.R9);
+    check("CP-CB-10", "D1-D9(F) D10(T) -> R10", await post(validBody({ email: existing.email })), 409, MSG.R10);
+    check("CP-CB-11", "D1-D10(F) D11(T) -> R11", await post(validBody({ id: existing.id })), 409, MSG.R11);
 
-    check("CP-CB-10", "D1-D9(F) D10(T) -> R10", await post(validBody({ id: existing.id })), 500, MSG.R10);
+    check("CP-CB-12", "D1-D11(F) D12(T) -> R12", await post(validBody({ name: "ñ".repeat(120) })), 500, MSG.R12);
 
-    check("CP-CB-11", "D1-D10(F) -> R11", await post(validBody()), 201, MSG.R11);
+    check("CP-CB-13", "D1-D12(F) -> R13", await post(validBody()), 201, MSG.R13);
 
     console.log("\nMC/DC for D3: typeof body !== 'object' || body === null || Array.isArray(body)");
     check("MC-D3-1", "F F F (object) -> continues to D4", await post({}), 400, MSG.R4);
@@ -109,12 +113,12 @@ async function main() {
     check("MC-D3-3", "F T F (null)", await post(null, { raw: "null" }), 400, MSG.R3);
     check("MC-D3-4", "F F T (array)", await post([]), 400, MSG.R3);
 
-    console.log("\nMC/DC for D8: emailOptIn !== undefined && typeof emailOptIn !== 'boolean'");
+    console.log("\nMC/DC for D9: emailOptIn !== undefined && typeof emailOptIn !== 'boolean'");
     const absent = validBody();
     delete absent.emailOptIn;
-    check("MC-D8-1", "F T (absent) -> accepted", await post(absent), 201, MSG.R11);
-    check("MC-D8-2", "T F (false) -> accepted", await post(validBody({ emailOptIn: false })), 201, MSG.R11);
-    check("MC-D8-3", 'T T (text "false") -> rejected', await post(validBody({ emailOptIn: "false" })), 400, MSG.R8);
+    check("MC-D9-1", "F T (absent) -> accepted", await post(absent), 201, MSG.R13);
+    check("MC-D9-2", "T F (false) -> accepted", await post(validBody({ emailOptIn: false })), 201, MSG.R13);
+    check("MC-D9-3", 'T T (text "false") -> rejected', await post(validBody({ emailOptIn: "false" })), 400, MSG.R9);
   } finally {
     await cleanup();
     await db.close();

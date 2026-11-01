@@ -1,12 +1,13 @@
 import fs from "fs";
+import { execSync } from "child_process";
 
 const ENV_FILE = ".env.local";
 
 function getWindowsHostIP(): string {
-  const resolvConf = fs.readFileSync("/etc/resolv.conf", "utf-8");
-  const match = resolvConf.match(/nameserver\s+([\d.]+)/);
+  const route = execSync("ip route show default", { encoding: "utf-8" });
+  const match = route.match(/default via ([\d.]+)/);
   if (!match) {
-    throw new Error("IP not in /etc/resolv.conf");
+    throw new Error("No default gateway found in 'ip route show default'");
   }
   return match[1];
 }
