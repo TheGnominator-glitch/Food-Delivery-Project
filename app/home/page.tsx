@@ -1,36 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useRequireUser } from "@/hooks/useRequireUser";
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  address: string;
-  creditBalance: number;
-  emailOptIn: boolean;
-}
-
+// Home (placeholder): greets the user, links to Restaurants, offers logout.
+// Orders and Account arrive with their features.
 export default function HomePage() {
   const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
+  const user = useRequireUser();
   const [loggingOut, setLoggingOut] = useState(false);
 
-  useEffect(() => {
-    fetch("/api/me")
-      .then(async (res) => {
-        if (!res.ok) {
-          router.replace("/login");
-          return;
-        }
-        const data = await res.json();
-        setUser(data.user);
-      })
-      .catch(() => router.replace("/login"));
-  }, [router]);
-
+  // FR-7: end the session, then return to the Load page (system flow)
   async function logOut() {
     setLoggingOut(true);
     await fetch("/api/logout", { method: "POST" }).catch(() => {});
@@ -54,6 +36,14 @@ export default function HomePage() {
         <p className="text-2xl font-extrabold tracking-tight text-leaf">foodie</p>
         <h1 className="mt-10 text-3xl font-bold text-ink">Hi, {firstName}</h1>
         <p className="mt-2 text-ink/70">You have {credits}.</p>
+
+        <Link
+          href="/restaurants"
+          className="mt-8 block rounded-lg bg-leaf px-4 py-3 text-center font-semibold text-white outline-none hover:bg-leaf/90 focus-visible:ring-4 focus-visible:ring-mango/50"
+        >
+          Restaurants
+        </Link>
+
         <button
           type="button"
           onClick={logOut}
