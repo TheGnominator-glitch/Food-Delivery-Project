@@ -1,6 +1,6 @@
 import "./env";
 import oracledb from "oracledb";
-import { categories, restaurants, type SeedItem, type SeedRestaurant } from "../database/seed-data";
+import { categories, restaurants, type SeedItem, type SeedRestaurant } from "../database/seed_data";
 
 type Conn = oracledb.Connection;
 

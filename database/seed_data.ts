@@ -5,7 +5,7 @@ export interface SeedExtra {
 
 export interface SeedItem {
   name: string;
-  price: number; // credits
+  price: number; 
   description?: string;
   customizations?: string[]; 
   extras?: SeedExtra[]; 
