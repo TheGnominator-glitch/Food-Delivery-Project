@@ -26,7 +26,7 @@ The app is built from the customer's perspective only: restaurants are fixed see
 In Ubuntu:
 
 ```bash
-git clone git@github.com:TheGnominator-glitch/foodie.git
+git clone git@github.com:TheGnominator-glitch/Food-Delivery-Project.git foodie
 cd foodie
 npm install
 ```
