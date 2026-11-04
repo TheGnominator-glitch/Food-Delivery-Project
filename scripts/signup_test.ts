@@ -1,3 +1,5 @@
+// Black-box tests for POST /api/signup (FR1, FR2, FR34, NFR4, NFR5) using the five techniques
+// Needs the dev server running. Run: npx tsx scripts/signup_test.ts
 import dotenv from "dotenv";
 dotenv.config({ path: ".env.local", quiet: true });
 import oracledb from "oracledb";
@@ -8,12 +10,14 @@ let passed = 0;
 let failed = 0;
 let db: oracledb.Connection;
 
+// A fake client IP per request, so the rate limiter (NFR4) does not interfere; random per run
 const ipPrefix = `10.${1 + Math.floor(Math.random() * 250)}.${1 + Math.floor(Math.random() * 250)}`;
 let ipCounter = 0;
 const nextIp = () => `${ipPrefix}.${++ipCounter}`;
 
 const rand = () => Math.random().toString(36).slice(2, 10).toUpperCase();
 
+// A valid signup; each test changes one field
 function validBody(overrides: Record<string, unknown> = {}) {
   return {
     id: "TST" + rand(),
@@ -27,6 +31,7 @@ function validBody(overrides: Record<string, unknown> = {}) {
   };
 }
 
+// Sends a signup request and returns the status
 async function post(body: unknown, opts: { ip?: string; raw?: string } = {}) {
   const res = await fetch(URL, {
     method: "POST",
@@ -39,6 +44,7 @@ async function post(body: unknown, opts: { ip?: string; raw?: string } = {}) {
   return { status: res.status, headers: res.headers };
 }
 
+// Compares the expected and actual results and prints PASS or FAIL
 function check(id: string, description: string, expected: string, actual: string) {
   const ok = expected === actual;
   ok ? passed++ : failed++;
@@ -46,6 +52,7 @@ function check(id: string, description: string, expected: string, actual: string
   console.log(`${tag}  ${id.padEnd(6)} ${description}${ok ? "" : `  [expected ${expected}, got ${actual}]`}`);
 }
 
+// Shortcut: send a body and compare the HTTP status
 async function expectStatus(id: string, description: string, body: unknown, expected: number) {
   const res = await post(body);
   check(id, description, String(expected), String(res.status));
@@ -58,6 +65,7 @@ async function main() {
     connectString: process.env.DB_CONNECT_STRING,
   });
 
+  // Deletes test sessions and users (IDs starting with TST), sessions first
   const cleanup = async () => {
     await db.execute("DELETE FROM sessions WHERE user_id LIKE 'TST%'");
     await db.execute("DELETE FROM users WHERE id LIKE 'TST%'");
@@ -66,6 +74,7 @@ async function main() {
   await cleanup();
 
   try {
+    // 1. Equivalence partitioning (FR1, FR2, NFR5): one value per class of input
     console.log("\n1. Equivalence partitioning");
 
     const existing = validBody();
@@ -75,6 +84,7 @@ async function main() {
     await expectStatus("EP-4", "required field missing (no name)", validBody({ name: "" }), 400);
     await expectStatus("EP-5", "email already registered", validBody({ email: existing.email }), 409);
 
+    // 2. Boundary value analysis (NFR5): values at the edges of each limit
     console.log("\n2. Boundary value analysis (phone: 7-15 digits, name: up to 120)");
 
     await expectStatus("BV-1", "6 digits (just below minimum)", validBody({ phone: "123456" }), 400);
@@ -83,6 +93,7 @@ async function main() {
     await expectStatus("BV-4", "16 digits (just above maximum)", validBody({ phone: "1".repeat(16) }), 400);
     await expectStatus("BV-5", "name of 121 characters (just above the 120 maximum)", validBody({ name: "A".repeat(121) }), 400);
 
+    // 3. Decision table (FR1, FR2): each combination of conditions has one outcome
     console.log("\n3. Decision table (signup rules)");
 
     const dup = validBody();
@@ -93,6 +104,7 @@ async function main() {
     await expectStatus("D3", "email registered -> 409", validBody({ email: dup.email }), 409);
     await expectStatus("D4", "all conditions met -> 201", validBody(), 201);
 
+    // 4. State transition (NFR4): the rate limiter going from Open to Blocked
     console.log("\n4. State transition (rate limiter: Open -> Blocked)");
 
     const ip = nextIp();
@@ -112,6 +124,7 @@ async function main() {
     const otherIp = await post({}, { ip: nextIp() });
     check("ST-4", "a different IP is unaffected", "not 429", otherIp.status === 429 ? "429" : "not 429");
 
+    // 5. Error guessing: likely failures from experience
     console.log("\n5. Error guessing");
 
     const malformed = await post(null, { raw: '{"id":' });
@@ -127,6 +140,7 @@ async function main() {
       "201 and table intact",
       `${sqlRes.status} and table ${tableAlive ? "intact" : "MISSING"}`);
 
+    // FR34: consent is never inferred from a non-boolean value
     const optInBody = validBody({ emailOptIn: "false" });
     await post(optInBody);
     const optInRow = await db.execute(
@@ -138,6 +152,7 @@ async function main() {
       "not opted in",
       optInStored === 1 ? "opted in" : "not opted in");
 
+    // A client cannot give itself credits
     const extraBody = validBody({ creditBalance: 99999 });
     await post(extraBody);
     const balRow = await db.execute(

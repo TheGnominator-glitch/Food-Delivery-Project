@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
+// FR5: the logged-in user, as returned by /api/me
 export interface CurrentUser {
   id: string;
   name: string;
@@ -13,6 +14,7 @@ export interface CurrentUser {
   emailOptIn: boolean;
 }
 
+// FR5: for pages that need a login: returns the user, or redirects to /login without a valid session
 export function useRequireUser(): CurrentUser | null {
   const router = useRouter();
   const [user, setUser] = useState<CurrentUser | null>(null);

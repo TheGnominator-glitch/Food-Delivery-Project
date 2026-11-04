@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRequireUser } from "@/hooks/useRequireUser";
 
+// FR9: one restaurant of the list, as returned by /api/restaurants
 interface Restaurant {
   id: number;
   name: string;
@@ -12,16 +13,19 @@ interface Restaurant {
   distanceKm: number | null;
 }
 
+// FR10: a category for the filter buttons
 interface Category {
   id: number;
   name: string;
 }
 
+// FR8: whether the location is being requested, was given, or was denied
 type LocationState =
   | { status: "asking" }
   | { status: "granted"; lat: number; lng: number }
   | { status: "denied" };
 
+// Restaurant List page (placeholder look): FR8-FR11
 export default function RestaurantsPage() {
   const user = useRequireUser();
   const [location, setLocation] = useState<LocationState>({ status: "asking" });
@@ -32,6 +36,7 @@ export default function RestaurantsPage() {
   const [radiusKm, setRadiusKm] = useState<number | null>(null);
   const [error, setError] = useState("");
 
+  // FR8: ask the browser for the location via navigator.geolocation; denied means "show all"
   useEffect(() => {
     if (!("geolocation" in navigator)) {
       setLocation({ status: "denied" });
@@ -44,6 +49,7 @@ export default function RestaurantsPage() {
     );
   }, []);
 
+  // FR10: load the categories for the filter buttons
   useEffect(() => {
     fetch("/api/categories")
       .then((res) => res.json())
@@ -51,6 +57,7 @@ export default function RestaurantsPage() {
       .catch(() => {});
   }, []);
 
+  // FR9-FR11: reload the list whenever the location, category or search changes
   useEffect(() => {
     if (location.status === "asking") return;
 
@@ -63,6 +70,7 @@ export default function RestaurantsPage() {
     if (search.trim()) params.set("search", search.trim());
 
     const controller = new AbortController();
+    // FR11: wait 250 ms after typing stops, and cancel outdated requests
     const timer = setTimeout(() => {
       fetch(`/api/restaurants?${params}`, { signal: controller.signal })
         .then(async (res) => {
@@ -99,6 +107,7 @@ export default function RestaurantsPage() {
         </Link>
         <h1 className="mt-6 text-3xl font-bold text-ink">Restaurants</h1>
 
+        {/* FR8, FR9: say whether the list is nearby-only or everything */}
         {location.status === "granted" && radiusKm !== null && (
           <p className="mt-3 text-ink/70">Showing restaurants within {radiusKm} km of you.</p>
         )}
@@ -108,6 +117,7 @@ export default function RestaurantsPage() {
           </p>
         )}
 
+        {/* FR11: search by name */}
         <label className="mt-6 block">
           <span className="block text-sm font-medium text-ink">Search by name</span>
           <input
@@ -119,6 +129,7 @@ export default function RestaurantsPage() {
           />
         </label>
 
+        {/* FR10: one category at a time; tapping the active one or "All" clears it */}
         <div className="mt-4 flex flex-wrap gap-2">
           <FilterButton active={categoryId === null} onClick={() => setCategoryId(null)}>
             All
@@ -146,6 +157,7 @@ export default function RestaurantsPage() {
           <p className="mt-6 text-ink/70">No restaurants match. Try another category or clear the search.</p>
         ) : (
           <ul className="mt-6 divide-y divide-mist border-y border-mist">
+            {/* FR9: each restaurant links to its menu (FR12) */}
             {restaurants.map((r) => (
               <li key={r.id}>
                 <Link
@@ -167,6 +179,7 @@ export default function RestaurantsPage() {
   );
 }
 
+// FR10: a toggle button for one category
 function FilterButton({
   active,
   onClick,

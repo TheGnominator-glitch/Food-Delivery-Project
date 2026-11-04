@@ -1,5 +1,6 @@
 import { getConnection } from "./db";
 
+// FR5: store a session; Oracle sets the expiry via SYSDATE + days, so one clock decides
 export async function insertSession(idHash: string, userId: string, days: number): Promise<void> {
   const connection = await getConnection();
   try {
@@ -13,6 +14,7 @@ export async function insertSession(idHash: string, userId: string, days: number
   }
 }
 
+// FR5: the user of a session that has not expired yet
 export async function findSessionUserId(idHash: string): Promise<string | null> {
   const connection = await getConnection();
   try {
@@ -27,6 +29,7 @@ export async function findSessionUserId(idHash: string): Promise<string | null> 
   }
 }
 
+// FR7: delete a session so its token stops working immediately
 export async function deleteSession(idHash: string): Promise<void> {
   const connection = await getConnection();
   try {

@@ -1,3 +1,4 @@
+// NFR4: in-memory rate limiter for signup and login (resets on restart; single server process)
 interface Entry {
   timestamps: number[];
   windowMs: number;
@@ -9,6 +10,7 @@ export interface RateLimitResult {
   retryAfterSeconds: number;
 }
 
+// Kept on globalThis so hot reloading in development does not wipe the counters
 const globalForRateLimit = globalThis as unknown as {
   rateLimitStore?: Map<string, Entry>;
 };
@@ -18,6 +20,7 @@ if (!globalForRateLimit.rateLimitStore) {
 }
 const store = globalForRateLimit.rateLimitStore;
 
+// Every 10 minutes, forget IPs with no recent attempts so memory does not grow forever
 const SWEEP_INTERVAL_MS = 10 * 60 * 1000;
 let lastSweep = Date.now();
 
@@ -33,6 +36,7 @@ function sweepExpired(now: number) {
   }
 }
 
+// NFR4: sliding window: allow up to "limit" attempts per key within "windowMs"
 export function checkRateLimit(
   key: string,
   limit: number,
@@ -63,6 +67,7 @@ export function checkRateLimit(
   };
 }
 
+// NFR4: identify the client by IP via x-forwarded-for (a client could fake it: known limitation)
 export function getClientIp(request: Request): string {
   const forwarded = request.headers.get("x-forwarded-for");
   if (forwarded) {

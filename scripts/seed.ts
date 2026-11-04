@@ -1,21 +1,27 @@
+// Loads the seed data (database/seed_data.ts) into Oracle. Safe to re-run: rows are matched by name,
+// so new entries are added and existing ones refreshed. All changes are saved together.
+// Run: npx tsx scripts/seed.ts
 import "./env";
 import oracledb from "oracledb";
 import { categories, restaurants, type SeedItem, type SeedRestaurant } from "../database/seed_data";
 
 type Conn = oracledb.Connection;
 
+// Counts what was added or refreshed per table, for the summary
 const counts: Record<string, { added: number; updated: number }> = {};
 function count(table: string, kind: "added" | "updated") {
   counts[table] ??= { added: 0, updated: 0 };
   counts[table][kind]++;
 }
 
+// The id of the first matching row, or null
 async function findId(db: Conn, sql: string, binds: oracledb.BindParameters): Promise<number | null> {
   const result = await db.execute(sql, binds);
   const rows = result.rows as unknown[][];
   return rows.length > 0 ? Number(rows[0][0]) : null;
 }
 
+// Inserts a row and returns the id Oracle generated for it
 async function insertReturningId(db: Conn, sql: string, binds: Record<string, unknown>): Promise<number> {
   const result = await db.execute(sql, {
     ...binds,
@@ -24,6 +30,7 @@ async function insertReturningId(db: Conn, sql: string, binds: Record<string, un
   return (result.outBinds as { id: number[] }).id[0];
 }
 
+// Categories, customizations and extras only have a name; the table name is fixed in code, never user input
 async function findOrAddByName(db: Conn, table: "category" | "customization" | "extra", name: string) {
   const existing = await findId(db, `SELECT id FROM ${table} WHERE name = :name`, { name });
   if (existing !== null) return existing;
@@ -31,6 +38,7 @@ async function findOrAddByName(db: Conn, table: "category" | "customization" | "
   return insertReturningId(db, `INSERT INTO ${table} (name) VALUES (:name) RETURNING id INTO :id`, { name });
 }
 
+// FR9: add or refresh a restaurant and its coordinates
 async function upsertRestaurant(db: Conn, r: SeedRestaurant, categoryId: number): Promise<number> {
   const binds = { categoryId, lat: r.latitude, lng: r.longitude };
   const existing = await findId(db, `SELECT id FROM restaurant WHERE name = :name`, { name: r.name });
@@ -51,6 +59,7 @@ async function upsertRestaurant(db: Conn, r: SeedRestaurant, categoryId: number)
   );
 }
 
+// FR12: add or refresh a menu item
 async function upsertMenuItem(db: Conn, restaurantId: number, item: SeedItem): Promise<number> {
   const description = item.description ?? null;
   const existing = await findId(
@@ -75,6 +84,7 @@ async function upsertMenuItem(db: Conn, restaurantId: number, item: SeedItem): P
   );
 }
 
+// FR13: offer a customization on an item
 async function linkCustomization(db: Conn, menuItemId: number, customizationId: number) {
   const binds = { menuItemId, customizationId };
   const existing = await findId(
@@ -90,6 +100,7 @@ async function linkCustomization(db: Conn, menuItemId: number, customizationId: 
   count("menu_item_customization", "added");
 }
 
+// FR13: offer an extra on an item, with its price for that item
 async function linkExtra(db: Conn, menuItemId: number, extraId: number, price: number) {
   const binds = { menuItemId, extraId, price };
   const existing = await findId(
@@ -121,11 +132,13 @@ async function main() {
   const waiting: string[] = [];
 
   try {
+    // FR10: categories
     const categoryIds = new Map<string, number>();
     for (const name of categories) {
       categoryIds.set(name, await findOrAddByName(db, "category", name));
     }
 
+    // FR13: customizations and extras are global: each name exists once, shared by many items
     const customizationIds = new Map<string, number>();
     const extraIds = new Map<string, number>();
     for (const r of restaurants) {
@@ -139,6 +152,7 @@ async function main() {
       }
     }
 
+    // FR9, FR12, FR13: restaurants and their menus; a restaurant without real coordinates is skipped
     for (const r of restaurants) {
       if (r.latitude === null || r.longitude === null) {
         waiting.push(`${r.name} (${r.category})`);
@@ -161,6 +175,7 @@ async function main() {
       }
     }
 
+    // Save everything at once; on any error, roll everything back
     await db.commit();
   } catch (err) {
     await db.rollback();

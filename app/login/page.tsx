@@ -3,8 +3,10 @@
 import { useState, type FormEvent, type InputHTMLAttributes } from "react";
 import { useRouter } from "next/navigation";
 
+// The page's two modes, chosen by the user with a toggle (system flow)
 type Mode = "login" | "signup";
 
+// Signup/Login page: FR1 (sign up) and FR3 (log in)
 export default function LoginPage() {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("login");
@@ -16,6 +18,7 @@ export default function LoginPage() {
     setError("");
   }
 
+  // FR1, FR3: send the form to /api/signup or /api/login
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
@@ -32,7 +35,7 @@ export default function LoginPage() {
             password: form.get("password"),
             phone: form.get("phone"),
             address: form.get("address"),
-            // FR-34: only an explicitly ticked box counts as consent
+            // FR34: only an explicitly ticked box counts as consent
             emailOptIn: form.get("emailOptIn") === "on",
           };
 
@@ -43,7 +46,7 @@ export default function LoginPage() {
         body: JSON.stringify(body),
       });
       if (res.ok) {
-        // Both endpoints set the session cookie, so the user lands logged in
+        // FR5: both endpoints set the session cookie, so the user lands logged in
         router.replace("/home");
         return;
       }
@@ -62,6 +65,7 @@ export default function LoginPage() {
         <p className="text-6xl font-extrabold tracking-tight text-leaf">foodie</p>
         <p className="mt-3 text-ink/70">Order from restaurants near you in Pereira.</p>
 
+        {/* Log in / Sign up toggle */}
         <div className="mt-10 flex gap-6 border-b border-mist">
           {(["login", "signup"] as const).map((m) => (
             <button
@@ -79,6 +83,7 @@ export default function LoginPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+          {/* FR1: signup-only fields */}
           {mode === "signup" && (
             <>
               <Field label="National ID (cédula)" name="id" required maxLength={20} />
@@ -86,6 +91,7 @@ export default function LoginPage() {
             </>
           )}
 
+          {/* FR1, FR3: fields used by both modes */}
           <Field label="Email" name="email" type="email" required maxLength={120} autoComplete="email" />
           <Field
             label="Password"
@@ -97,6 +103,7 @@ export default function LoginPage() {
             hint={mode === "signup" ? "At least 8 characters" : undefined}
           />
 
+          {/* FR1, FR34: more signup-only fields, including the email opt-in (unticked by default) */}
           {mode === "signup" && (
             <>
               <Field label="Phone" name="phone" type="tel" required placeholder="+57 300 123 4567" autoComplete="tel" />
@@ -114,6 +121,7 @@ export default function LoginPage() {
             </p>
           )}
 
+          {/* FR1, FR3: submits to the endpoint for the current mode */}
           <button
             type="submit"
             disabled={busy}
@@ -129,6 +137,7 @@ export default function LoginPage() {
   );
 }
 
+// A labeled text input, used by every field of the form
 function Field({
   label,
   hint,

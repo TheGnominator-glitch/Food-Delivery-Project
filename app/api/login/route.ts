@@ -4,19 +4,24 @@ import { findUserForLogin } from "@/lib/userRepository";
 import { createSession, SESSION_COOKIE, sessionCookieOptions } from "@/lib/session";
 import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
 
+// NFR4: at most 5 login attempts per IP per hour (separate from signup)
 const LOGIN_LIMIT = 5;
 const LOGIN_WINDOW_MS = 60 * 60 * 1000;
 
+// FR3: one message for every failed login, so the form cannot reveal which emails exist
 const INVALID = "Invalid email or password";
 
+// Used when the email does not exist, so a failed login takes the same time either way
 let dummyHash: string | null = null;
 async function getDummyHash(): Promise<string> {
   if (!dummyHash) dummyHash = await bcrypt.hash("dummy-password-for-timing", 10);
   return dummyHash;
 }
 
+// FR3: POST /api/login logs a user in
 export async function POST(request: NextRequest) {
   try {
+    // NFR4: rate limit first, before any other work
     const ip = getClientIp(request);
     const rate = checkRateLimit(`login:${ip}`, LOGIN_LIMIT, LOGIN_WINDOW_MS);
     if (!rate.allowed) {
@@ -29,6 +34,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Read the body safely, so malformed JSON gets a 400 instead of crashing the handler
     let body;
     try {
       body = await request.json();
@@ -39,6 +45,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // The body must be a JSON object (not null, text or an array)
     if (typeof body !== "object" || body === null || Array.isArray(body)) {
       return NextResponse.json(
         { error: "Request body must be a JSON object" },
@@ -48,6 +55,7 @@ export async function POST(request: NextRequest) {
 
     const { email, password } = body;
 
+    // FR3: email and password are both required
     if (typeof email !== "string" || typeof password !== "string" || !email || !password) {
       return NextResponse.json(
         { error: "Email and password are required" },
@@ -55,13 +63,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // bcrypt only uses the first 72 bytes of a password. Rejecting longer ones means a
-    // guess that merely starts with the right 72 bytes can never be accepted.
+    // NFR3: bcrypt ignores bytes past 72, so longer passwords are rejected rather than half-checked
     if (Buffer.byteLength(password, "utf8") > 72) {
       return NextResponse.json({ error: INVALID }, { status: 401 });
     }
 
-    // FR-3 / NFR-3: compare against the stored hash, never plain text
+    // FR3, NFR3: compare with the stored hash via bcrypt.compare, never plain text
     const user = await findUserForLogin(email);
     const hashToCheck = user ? user.passwordHash : await getDummyHash();
     const passwordMatches = await bcrypt.compare(password, hashToCheck);
@@ -70,12 +77,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: INVALID }, { status: 401 });
     }
 
-    // FR-5: start a session and hand the token to the browser in a cookie
+    // FR5: start a session and send its token to the browser in a cookie
     const token = await createSession(user.id);
     const response = NextResponse.json({ message: "Logged in" }, { status: 200 });
     response.cookies.set(SESSION_COOKIE, token, sessionCookieOptions);
     return response;
   } catch (err) {
+    // Unexpected errors: full details in the server log, a generic message for the client
     console.error("Login error:", err);
     return NextResponse.json(
       { error: "Something went wrong logging in" },

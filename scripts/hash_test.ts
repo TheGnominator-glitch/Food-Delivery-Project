@@ -1,3 +1,5 @@
+// NFR3: checks bcrypt works: the right password matches its hash and a wrong one does not
+// Run: npx tsx scripts/hash_test.ts
 import bcrypt from "bcrypt";
 
 async function testHashing() {

@@ -1,15 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { findRestaurants } from "@/lib/restaurantRepository";
 
+// FR9: restaurants within 5 km count as nearby
 const NEARBY_RADIUS_KM = 5;
+// FR11: longest search text accepted
 const MAX_SEARCH_LENGTH = 100;
 
 const badRequest = (error: string) => NextResponse.json({ error }, { status: 400 });
 
+// FR8-FR11: GET /api/restaurants?lat=&lng=&category=&search=
 export async function GET(request: NextRequest) {
   try {
     const params = request.nextUrl.searchParams;
 
+    // FR8, FR9: with valid lat and lng, only nearby restaurants; without them (location denied), all of them
     const latParam = params.get("lat");
     const lngParam = params.get("lng");
     let location = null;
@@ -26,6 +30,7 @@ export async function GET(request: NextRequest) {
       location = { lat, lng, radiusKm: NEARBY_RADIUS_KM };
     }
 
+    // FR10: an optional category id
     const categoryParam = params.get("category");
     let categoryId: number | null = null;
     if (categoryParam) {
@@ -35,6 +40,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // FR11: an optional name search
     const search = params.get("search")?.trim() || null;
     if (search && search.length > MAX_SEARCH_LENGTH) {
       return badRequest("search is too long");
@@ -46,6 +52,7 @@ export async function GET(request: NextRequest) {
       { status: 200 }
     );
   } catch (err) {
+    // Unexpected errors: full details in the server log, a generic message for the client
     console.error("Restaurants error:", err);
     return NextResponse.json({ error: "Something went wrong loading restaurants" }, { status: 500 });
   }

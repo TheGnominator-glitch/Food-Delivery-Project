@@ -1,5 +1,6 @@
 import { getConnection } from "./db";
 
+// FR1: the fields stored for a new account
 export interface NewUser {
   id: string;
   name: string;
@@ -10,6 +11,7 @@ export interface NewUser {
   emailOptIn: boolean;
 }
 
+// FR2: check for an existing email, ignoring upper/lower case, via LOWER()
 export async function emailExists(email: string): Promise<boolean> {
   const connection = await getConnection();
   try {
@@ -24,6 +26,7 @@ export async function emailExists(email: string): Promise<boolean> {
   }
 }
 
+// FR2: check for an existing national ID (the primary key)
 export async function idExists(id: string): Promise<boolean> {
   const connection = await getConnection();
   try {
@@ -38,6 +41,7 @@ export async function idExists(id: string): Promise<boolean> {
   }
 }
 
+// FR1, FR34: insert the account, storing the email opt-in as 1 or 0
 export async function createUser(user: NewUser): Promise<void> {
   const connection = await getConnection();
   try {
@@ -60,11 +64,13 @@ export async function createUser(user: NewUser): Promise<void> {
   }
 }
 
+// FR3: what login needs: the user id and the password hash
 export interface LoginUser {
   id: string;
   passwordHash: string;
 }
 
+// FR3: find an account by email, ignoring upper/lower case
 export async function findUserForLogin(email: string): Promise<LoginUser | null> {
   const connection = await getConnection();
   try {
@@ -80,6 +86,7 @@ export async function findUserForLogin(email: string): Promise<LoginUser | null>
   }
 }
 
+// FR5: the user data the app may expose (no password hash)
 export interface PublicUser {
   id: string;
   name: string;
@@ -90,6 +97,7 @@ export interface PublicUser {
   emailOptIn: boolean;
 }
 
+// FR5: load the logged-in user via an explicit column list, so password_hash is never read
 export async function findUserById(id: string): Promise<PublicUser | null> {
   const connection = await getConnection();
   try {

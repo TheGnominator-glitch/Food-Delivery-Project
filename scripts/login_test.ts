@@ -1,3 +1,5 @@
+// FR3, FR5, NFR3, NFR4: tests POST /api/login (needs the dev server running)
+// Run: npx tsx scripts/login_test.ts
 import "./env";
 import oracledb from "oracledb";
 import { getSessionUserId } from "../lib/session";
@@ -8,6 +10,7 @@ const INVALID = "Invalid email or password";
 let passed = 0;
 let failed = 0;
 
+// A fake client IP per request, so the rate limiter (NFR4) does not interfere; random per run
 const ipPrefix = `10.${1 + Math.floor(Math.random() * 250)}.${1 + Math.floor(Math.random() * 250)}`;
 let ipCounter = 0;
 const nextIp = () => `${ipPrefix}.${++ipCounter}`;
@@ -20,6 +23,7 @@ function check(id: string, description: string, ok: boolean, detail = "") {
   console.log(`${tag}  ${id.padEnd(5)} ${description}${ok ? "" : `  [${detail}]`}`);
 }
 
+// Sends a POST and returns the status, the message and the session cookie
 async function post(path: string, body: unknown, opts: { ip?: string; raw?: string } = {}) {
   const res = await fetch(BASE + path, {
     method: "POST",
@@ -31,6 +35,7 @@ async function post(path: string, body: unknown, opts: { ip?: string; raw?: stri
   return { status: res.status, message: data.error ?? data.message ?? "", cookie };
 }
 
+// Creates a test account through the real signup endpoint
 async function register(password: string) {
   const account = {
     id: "TST" + rand(),
@@ -53,6 +58,7 @@ async function main() {
     connectString: process.env.DB_CONNECT_STRING,
   });
 
+  // Deletes test sessions and users (IDs starting with TST), sessions first
   const cleanup = async () => {
     await db.execute("DELETE FROM sessions WHERE user_id LIKE 'TST%'");
     await db.execute("DELETE FROM users WHERE id LIKE 'TST%'");
@@ -63,6 +69,7 @@ async function main() {
   try {
     const user = await register("Passw0rd!x");
 
+    // FR3, FR5: a correct login returns 200 and a 7-day HttpOnly session cookie
     const ok = await post("/api/login", { email: user.email, password: user.password });
     check("L-1", "correct email and password -> 200", ok.status === 200, `got ${ok.status}`);
     check("L-2", "cookie is HttpOnly and lasts 7 days",
@@ -71,6 +78,7 @@ async function main() {
     check("L-3", "cookie's token maps to this user's session in the database",
       (await getSessionUserId(token)) === user.id);
 
+    // FR3: a wrong password and an unknown email get the same answer
     const wrong = await post("/api/login", { email: user.email, password: "WrongPass1!" });
     check("L-4", "wrong password -> 401 generic message",
       wrong.status === 401 && wrong.message === INVALID, `${wrong.status} "${wrong.message}"`);
@@ -78,19 +86,23 @@ async function main() {
     check("L-5", "unknown email -> same 401 and message",
       unknown.status === 401 && unknown.message === INVALID, `${unknown.status} "${unknown.message}"`);
 
+    // FR3: email case does not matter
     const upper = await post("/api/login", { email: user.email.toUpperCase(), password: user.password });
     check("L-6", "email in different case -> 200", upper.status === 200, `got ${upper.status}`);
 
+    // Bad requests get a 400
     const missing = await post("/api/login", { email: user.email });
     check("L-7", "missing password -> 400", missing.status === 400, `got ${missing.status}`);
     const broken = await post("/api/login", null, { raw: '{"email":' });
     check("L-8", "malformed JSON -> 400", broken.status === 400, `got ${broken.status}`);
 
+    // NFR3: bcrypt ignores bytes past 72, so a longer guess must still fail
     const longUser = await register("a".repeat(72));
     const longGuess = await post("/api/login", { email: longUser.email, password: "a".repeat(72) + "x" });
     check("L-9", "real 72-byte password + 1 extra character -> 401",
       longGuess.status === 401, `got ${longGuess.status}`);
 
+    // NFR4: the sixth attempt from one IP within the hour is blocked
     const ip = nextIp();
     for (let i = 0; i < 5; i++) await post("/api/login", { email: user.email, password: "WrongPass1!" }, { ip });
     const sixth = await post("/api/login", { email: user.email, password: user.password }, { ip });

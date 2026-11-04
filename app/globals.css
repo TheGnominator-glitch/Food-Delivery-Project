@@ -1,5 +1,7 @@
+/* Tailwind CSS utility classes */
 @import "tailwindcss";
 
+/* Placeholder design tokens (colors); the final look is decided in the design phase */
 @theme {
   --color-leaf: #1f5130;  
   --color-mango: #f2b134;  
@@ -9,10 +11,12 @@
   --color-danger: #b3261e; 
 }
 
+/* Makes the brand font the default for every page */
 @theme inline {
   --font-sans: var(--font-brand);
 }
 
+/* Base page background and text color */
 body {
   background: #ffffff;
   color: var(--color-ink);

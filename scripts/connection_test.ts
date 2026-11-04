@@ -1,7 +1,10 @@
+// Checks that Oracle is reachable with the credentials in .env.local
+// Run: npx tsx scripts/connection_test.ts
 import dotenv from "dotenv";
 dotenv.config({ path: ".env.local" });
 import oracledb from "oracledb";
 
+// Lists the tables the user owns; seeing all 18 confirms the connection, the credentials and the schema
 async function testConnection() {
   try {
     const connection = await oracledb.getConnection({

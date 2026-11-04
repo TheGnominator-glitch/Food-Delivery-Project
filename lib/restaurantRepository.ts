@@ -1,10 +1,12 @@
 import { getConnection } from "./db";
 
+// FR10: a restaurant category
 export interface Category {
   id: number;
   name: string;
 }
 
+// FR9: one row of the restaurant list; distanceKm is null when the location is unknown
 export interface RestaurantSummary {
   id: number;
   name: string;
@@ -13,12 +15,14 @@ export interface RestaurantSummary {
   distanceKm: number | null; 
 }
 
+// FR9-FR11: the filters the list can apply
 export interface RestaurantFilters {
   location: { lat: number; lng: number; radiusKm: number } | null;
   categoryId: number | null;
   search: string | null;
 }
 
+// FR10: all categories, alphabetically, for the filter buttons
 export async function listCategories(): Promise<Category[]> {
   const connection = await getConnection();
   try {
@@ -30,17 +34,20 @@ export async function listCategories(): Promise<Category[]> {
   }
 }
 
+// FR9: straight-line distance in km via the haversine formula, calculated by Oracle (ACOS(-1) is pi)
 const DISTANCE_KM = `6371 * 2 * ASIN(SQRT(
     POWER(SIN((r.latitude - :lat) * ACOS(-1) / 360), 2) +
     COS(:lat * ACOS(-1) / 180) * COS(r.latitude * ACOS(-1) / 180) *
     POWER(SIN((r.longitude - :lng) * ACOS(-1) / 360), 2)))`;
 
 
+// FR9-FR11: list restaurants; only fixed SQL pieces are joined, every value goes in as a bind variable
 export async function findRestaurants(filters: RestaurantFilters): Promise<RestaurantSummary[]> {
   const binds: Record<string, string | number> = {};
   const conditions: string[] = [];
   let distanceColumn = "NULL";
 
+  // FR9: keep restaurants within the radius, nearest first
   if (filters.location) {
     distanceColumn = DISTANCE_KM;
     binds.lat = filters.location.lat;
@@ -48,10 +55,12 @@ export async function findRestaurants(filters: RestaurantFilters): Promise<Resta
     binds.radius = filters.location.radiusKm;
     conditions.push("distance_km <= :radius");
   }
+  // FR10: one category at a time
   if (filters.categoryId !== null) {
     conditions.push("category_id = :categoryId");
     binds.categoryId = filters.categoryId;
   }
+  // FR11: name search via INSTR, so % and _ are plain text, not wildcards
   if (filters.search) {
     conditions.push("INSTR(LOWER(name), LOWER(:search)) > 0");
     binds.search = filters.search;
@@ -82,17 +91,20 @@ export async function findRestaurants(filters: RestaurantFilters): Promise<Resta
   }
 }
 
+// FR13: a free customization
 export interface MenuOption {
   id: number;
   name: string;
 }
 
+// FR13: a paid extra; its price is for one specific item
 export interface MenuExtra {
   id: number;
   name: string;
   price: number; 
 }
 
+// FR12, FR13: a menu item and its options
 export interface MenuItem {
   id: number;
   name: string;
@@ -102,6 +114,7 @@ export interface MenuItem {
   extras: MenuExtra[];
 }
 
+// FR12: a restaurant and its menu
 export interface RestaurantMenu {
   id: number;
   name: string;
@@ -109,6 +122,7 @@ export interface RestaurantMenu {
   items: MenuItem[];
 }
 
+// FR12, FR13: a restaurant with its items and each item's options (null if not found)
 export async function findRestaurantMenu(restaurantId: number): Promise<RestaurantMenu | null> {
   const connection = await getConnection();
   try {
@@ -122,6 +136,7 @@ export async function findRestaurantMenu(restaurantId: number): Promise<Restaura
     if (restaurantRows.length === 0) return null;
     const [id, name, category] = restaurantRows[0];
 
+    // FR12: the items, in menu order
     const itemResult = await connection.execute(
       `SELECT id, name, price, description FROM menu_item
        WHERE restaurant_id = :id ORDER BY id`,
@@ -139,6 +154,7 @@ export async function findRestaurantMenu(restaurantId: number): Promise<Restaura
       });
     }
 
+    // FR13: each item's free customizations
     const customizationResult = await connection.execute(
       `SELECT mic.menu_item_id, cu.id, cu.name
        FROM menu_item_customization mic
@@ -152,6 +168,7 @@ export async function findRestaurantMenu(restaurantId: number): Promise<Restaura
       items.get(Number(itemId))?.customizations.push({ id: Number(optionId), name: String(optionName) });
     }
 
+    // FR13: each item's paid extras; the price comes from menu_item_extra, so it can differ per item
     const extraResult = await connection.execute(
       `SELECT mie.menu_item_id, e.id, e.name, mie.price
        FROM menu_item_extra mie
