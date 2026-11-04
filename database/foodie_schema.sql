@@ -1,5 +1,5 @@
 -- Foodie database schema: creates all 18 tables. Run once, in order, as the app's Oracle user.
--- FR1, FR3: user accounts; the national ID (cedula) is the primary key
+-- FR1, FR3: user accounts; CC is the primary key
 CREATE TABLE users (
     id VARCHAR2(20) PRIMARY KEY,          
     name VARCHAR2(120) NOT NULL,

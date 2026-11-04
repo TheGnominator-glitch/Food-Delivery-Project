@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-// Load page (user flow): the entry point of the app
+// Load page: the entry point of the app
 export default function LoadPage() {
   const router = useRouter();
 

@@ -1,7 +1,7 @@
 /* Tailwind CSS utility classes */
 @import "tailwindcss";
 
-/* Placeholder design tokens (colors); the final look is decided in the design phase */
+/* Placeholder design tokens; the final look is decided in the design phase */
 @theme {
   --color-leaf: #1f5130;  
   --color-mango: #f2b134;  

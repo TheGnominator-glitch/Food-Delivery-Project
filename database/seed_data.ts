@@ -1,5 +1,4 @@
-// Development seed data. Prices are in credits (1 credit = 1,000 COP).
-// Restaurants are fictional; their locations are real spots in Pereira.
+// Development seed data. Prices are in credits
 // FR13: a paid extra and its price for one item
 export interface SeedExtra {
   name: string;
@@ -29,7 +28,7 @@ export interface SeedRestaurant {
 export const categories = ["Hamburguesas", "Pizza", "Comida típica", "Pollo", "Sushi", "Postres"];
 
 // FR9 test layout: three restaurants in a west cluster, three in a center cluster about 7 km away,
-// and two far away (Cerritos road, Mirador Buenavida), so "nearby" can be tested from either cluster
+// and two far away, so "nearby" can be tested from either cluster
 export const restaurants: SeedRestaurant[] = [
   {
     name: "La Parrilla de la 30",

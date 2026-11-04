@@ -1,5 +1,5 @@
 // Loads the seed data (database/seed_data.ts) into Oracle. Safe to re-run: rows are matched by name,
-// so new entries are added and existing ones refreshed. All changes are saved together.
+// so new entries are added and existing ones refreshed. 
 // Run: npx tsx scripts/seed.ts
 import "./env";
 import oracledb from "oracledb";

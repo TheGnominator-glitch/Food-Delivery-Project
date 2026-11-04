@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRequireUser } from "@/hooks/useRequireUser";
 
-// Home (placeholder): greets the user and links to Restaurants; Orders and Account come later
+// Home: greets the user and links to Restaurants; Orders and Account come later
 export default function HomePage() {
   const router = useRouter();
   // FR5: requires a logged-in user
