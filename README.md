@@ -1,8 +1,8 @@
 # Foodie
 
-A food delivery web app for Pereira, Colombia, built as a course project. Users sign up, find restaurants near them, browse menus, pay with an internal credit system and follow a simulated delivery on a live map.
+A food delivery web app. Users sign up, find restaurants near them, browse menus, pay with an internal credit system and follow a simulated delivery on a live map.
 
-The app is built from the customer's perspective only: restaurants are fixed seed data (fictional names at real locations in Pereira) and drivers are simulated.
+Customer's perspective only.
 
 ## Tech stack
 
@@ -17,7 +17,6 @@ The app is built from the customer's perspective only: restaurants are fixed see
 - Windows with **WSL2** running Ubuntu
 - **Node.js 24**, installed inside Ubuntu through nvm
 - **Oracle Database XE** and **SQL Developer**, installed on Windows
-- **Git**, with an SSH key added to your GitHub account
 
 ## Setup
 
@@ -33,7 +32,7 @@ npm install
 
 ### 2. Create the Oracle user
 
-In SQL Developer, connected as `SYSTEM`:
+Connected as `SYSTEM`:
 
 ```sql
 CREATE USER C##foodie IDENTIFIED BY "your_password";
@@ -43,11 +42,11 @@ ALTER USER C##foodie QUOTA UNLIMITED ON USERS;
 
 ### 3. Create the tables
 
-In SQL Developer, connect as `C##foodie`, open `database/foodie_schema.sql` and run it as a script (F5). It creates 18 tables.
+In SQL Developer, connect as `C##foodie`, open `database/foodie_schema.sql` and run it as a script. It should creates 18 tables.
 
-### 4. Let WSL reach Oracle
+### 4. Let WSL reach Oracle (Optional step)
 
-Ubuntu reaches Oracle on Windows over port 1521, which Windows Firewall blocks by default. In PowerShell, run as Administrator:
+Ubuntu reaches Oracle on Windows over port 1521, which Windows Firewall blocks by default. To bypass this run as an Admin:
 
 ```powershell
 New-NetFirewallRule -DisplayName "Oracle WSL Access" -Direction Inbound -Protocol TCP -LocalPort 1521 -Action Allow -Profile Any
@@ -59,13 +58,13 @@ New-NetFirewallRule -DisplayName "Oracle WSL Access" -Direction Inbound -Protoco
 cp .env.example .env.local
 ```
 
-Put your Oracle password in `.env.local`, keeping the quotes. Then fill in the Windows host IP:
+Put the Oracle password in `.env.local`. Then fill in the Windows host IP:
 
 ```bash
 npx tsx scripts/ip_update.ts
 ```
 
-WSL can change that IP after a reboot. If the database connection times out, run `ip_update.ts` again.
+WSL can change that IP after a reboot so one might have to re-run this multiple times
 
 ### 6. Check the connection
 
@@ -81,7 +80,7 @@ It should print `Connected` and the 18 table names.
 npx tsx scripts/seed.ts
 ```
 
-It adds 6 categories, 8 restaurants and 33 menu items. Re-running it is safe.
+It adds 6 categories, 8 restaurants and 33 menu items. 
 
 ### 8. Run the app
 
@@ -101,12 +100,12 @@ Run every script from the project root.
 | `npx tsx scripts/ip_update.ts` | Writes the Windows host IP into `.env.local` |
 | `npx tsx scripts/connection_test.ts` | Checks the Oracle connection and lists the tables |
 | `npx tsx scripts/seed.ts` | Loads the development seed data |
-| `npx tsx scripts/session_test.ts` | Tests the session helpers (needs only Oracle) |
-| `npx tsx scripts/login_test.ts` | Tests login (needs the dev server) |
-| `npx tsx scripts/me_logout_test.ts` | Tests the session check and logout (needs the dev server) |
-| `npx tsx scripts/restaurants_test.ts` | Tests restaurant discovery (needs the dev server and the seed) |
-| `npx tsx scripts/signup_test.ts` | Black-box tests for signup (needs the dev server) |
-| `npx tsx scripts/whitebox_test.ts` | White-box tests for signup (needs the dev server) |
+| `npx tsx scripts/session_test.ts` | Tests the session helpers |
+| `npx tsx scripts/login_test.ts` | Tests login |
+| `npx tsx scripts/me_logout_test.ts` | Tests the session check and logout |
+| `npx tsx scripts/restaurants_test.ts` | Tests restaurant discovery |
+| `npx tsx scripts/signup_test.ts` | Black-box tests for signup |
+| `npx tsx scripts/whitebox_test.ts` | White-box tests for signup |
 
 The tests create accounts whose IDs start with `TST` and delete them when they finish.
 
@@ -120,5 +119,3 @@ database/     schema and seed data
 scripts/      tests and utilities
 diagrams/     design diagrams
 ```
-
-Every block of code carries a comment with the requirement it implements, for example `// FR3: ...`.
