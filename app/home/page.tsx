@@ -12,7 +12,7 @@ export default function HomePage() {
   const user = useRequireUser();
   const [loggingOut, setLoggingOut] = useState(false);
 
-  // FR7: end the session via /api/logout, then return to the Load page (system flow)
+  // FR7: end the session via /api/logout, then return to the Load page 
   async function logOut() {
     setLoggingOut(true);
     await fetch("/api/logout", { method: "POST" }).catch(() => {});
