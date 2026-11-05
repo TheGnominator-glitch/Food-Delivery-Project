@@ -3,7 +3,7 @@
 import { useState, type FormEvent, type InputHTMLAttributes } from "react";
 import { useRouter } from "next/navigation";
 
-// The page's two modes, chosen by the user with a toggle (system flow)
+// The page's two modes, chosen by the user with a toggle 
 type Mode = "login" | "signup";
 
 // Signup/Login page: FR1 (sign up) and FR3 (log in)

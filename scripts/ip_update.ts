@@ -1,4 +1,4 @@
-// Writes the Windows host IP into DB_CONNECT_STRING in .env.local (WSL changes it after a reboot)
+// Writes the Windows host IP into DB_CONNECT_STRING in .env.local since WSL changes it after a reboot
 // Run: npx tsx scripts/ip_update.ts
 import fs from "fs";
 import { execSync } from "child_process";

@@ -26,7 +26,7 @@ export async function emailExists(email: string): Promise<boolean> {
   }
 }
 
-// FR2: check for an existing national ID (the primary key)
+// FR2: check for an existing CC
 export async function idExists(id: string): Promise<boolean> {
   const connection = await getConnection();
   try {
@@ -86,7 +86,7 @@ export async function findUserForLogin(email: string): Promise<LoginUser | null>
   }
 }
 
-// FR5: the user data the app may expose (no password hash)
+// FR5: the user data the app may expose 
 export interface PublicUser {
   id: string;
   name: string;

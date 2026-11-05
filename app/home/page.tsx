@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRequireUser } from "@/hooks/useRequireUser";
 
-// Home: greets the user and links to Restaurants; Orders and Account come later
+// Home: greets the user and links to Restaurants
 export default function HomePage() {
   const router = useRouter();
   // FR5: requires a logged-in user
@@ -37,7 +37,7 @@ export default function HomePage() {
         <h1 className="mt-10 text-3xl font-bold text-ink">Hi, {firstName}</h1>
         <p className="mt-2 text-ink/70">You have {credits}.</p>
 
-        {/* Restaurants button (system flow) */}
+        {/* Restaurants button */}
         <Link
           href="/restaurants"
           className="mt-8 block rounded-lg bg-leaf px-4 py-3 text-center font-semibold text-white outline-none hover:bg-leaf/90 focus-visible:ring-4 focus-visible:ring-mango/50"

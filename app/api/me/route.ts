@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionUserId, SESSION_COOKIE } from "@/lib/session";
 import { findUserById } from "@/lib/userRepository";
 
-// FR5: GET /api/me answers "who is logged in?" (the Load page check); 401 without a valid session
+// FR5: GET /api/me answers "who is logged in?", essentially the Load page check; 401 without a valid session
 export async function GET(request: NextRequest) {
   try {
     const token = request.cookies.get(SESSION_COOKIE)?.value;
