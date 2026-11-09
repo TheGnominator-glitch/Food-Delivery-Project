@@ -5,14 +5,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRequireUser } from "@/hooks/useRequireUser";
 
-// Home: greets the user and links to Restaurants
+// Home (placeholder): greets the user and links to Restaurants; Orders and Account come later
 export default function HomePage() {
   const router = useRouter();
   // FR5: requires a logged-in user
   const user = useRequireUser();
   const [loggingOut, setLoggingOut] = useState(false);
 
-  // FR7: end the session via /api/logout, then return to the Load page 
+  // FR7: end the session via /api/logout, then return to the Load page (system flow)
   async function logOut() {
     setLoggingOut(true);
     await fetch("/api/logout", { method: "POST" }).catch(() => {});
@@ -37,7 +37,7 @@ export default function HomePage() {
         <h1 className="mt-10 text-3xl font-bold text-ink">Hi, {firstName}</h1>
         <p className="mt-2 text-ink/70">You have {credits}.</p>
 
-        {/* Restaurants button */}
+        {/* Restaurants button (system flow) */}
         <Link
           href="/restaurants"
           className="mt-8 block rounded-lg bg-leaf px-4 py-3 text-center font-semibold text-white outline-none hover:bg-leaf/90 focus-visible:ring-4 focus-visible:ring-mango/50"
@@ -45,6 +45,15 @@ export default function HomePage() {
           Restaurants
         </Link>
 
+        {/* FR21: temporary stand-in; the flow puts Buy Credits on the Account page, where it moves once Account exists */}
+        <Link
+          href="/credits?returnTo=/home"
+          className="mt-3 block rounded-lg border border-leaf px-4 py-3 text-center font-semibold text-leaf outline-none hover:bg-mist focus-visible:ring-4 focus-visible:ring-mango/50"
+        >
+          Buy credits
+        </Link>
+
+        {/* FR7: temporary stand-in; the flow puts Log out on the Account page, where it moves once Account exists */}
         <button
           type="button"
           onClick={logOut}

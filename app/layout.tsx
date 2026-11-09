@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Bricolage_Grotesque } from "next/font/google";
 import "./globals.css";
+import { CartLink } from "@/components/CartLink";
 
 // Placeholder typeface; the final look is decided in the design phase
 const brand = Bricolage_Grotesque({
@@ -22,7 +23,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${brand.variable} font-sans antialiased`}>{children}</body>
+      <body className={`${brand.variable} font-sans antialiased`}>
+        {/* FR16: the cart link, on every page except Account (it hides itself) */}
+        <CartLink />
+        {children}
+      </body>
     </html>
   );
 }

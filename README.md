@@ -6,11 +6,11 @@ Customer's perspective only.
 
 ## Tech stack
 
-- **Next.js 16** (App Router) with **React 19** and **TypeScript**
+- **Next.js 16** with **React 19** and **TypeScript**
 - **Tailwind CSS 4**
 - **Oracle Database XE**, accessed with **node-oracledb** in thin mode
-- **bcrypt** for password hashing
-- Planned: **OSRM** (road routes), **Leaflet** (maps), **Nodemailer** with Gmail SMTP (email notifications)
+- **bcrypt** 
+- Planned: **OSRM**, **Leaflet**, **Nodemailer** with Gmail SMTP 
 
 ## Prerequisites
 
@@ -43,6 +43,8 @@ ALTER USER C##foodie QUOTA UNLIMITED ON USERS;
 ### 3. Create the tables
 
 In SQL Developer, connect as `C##foodie`, open `database/foodie_schema.sql` and run it as a script. It should creates 18 tables.
+
+**Schema changes.** Later changes to the tables come as numbered files in `database/` (for example `002_cart_quantity_check.sql`). A database created from the current `foodie_schema.sql` already includes them all. A database created earlier needs each new file run once, as `C##foodie`, in number order.
 
 ### 4. Let WSL reach Oracle (Optional step)
 
@@ -99,23 +101,34 @@ Run every script from the project root.
 | `npm run dev` | Starts the development server |
 | `npx tsx scripts/ip_update.ts` | Writes the Windows host IP into `.env.local` |
 | `npx tsx scripts/connection_test.ts` | Checks the Oracle connection and lists the tables |
+| `npx tsx scripts/hash_test.ts` | Checks that bcrypt works |
 | `npx tsx scripts/seed.ts` | Loads the development seed data |
-| `npx tsx scripts/session_test.ts` | Tests the session helpers |
-| `npx tsx scripts/login_test.ts` | Tests login |
-| `npx tsx scripts/me_logout_test.ts` | Tests the session check and logout |
-| `npx tsx scripts/restaurants_test.ts` | Tests restaurant discovery |
-| `npx tsx scripts/signup_test.ts` | Black-box tests for signup |
-| `npx tsx scripts/whitebox_test.ts` | White-box tests for signup |
 
-The tests create accounts whose IDs start with `TST` and delete them when they finish.
+## Tests
+
+Each module has a black box suite and a white box suite. Both need the dev server running, and the restaurant and menu suites also need the seed loaded. The control flow graph for each white box suite is in `diagrams/cfg/`.
+
+| Module | Black box | White box |
+|---|---|---|---|
+| Signup | `npx tsx scripts/signup_blackbox.ts` | `npx tsx scripts/signup_whitebox.ts` |
+| Login | `npx tsx scripts/login_blackbox.ts` | `npx tsx scripts/login_whitebox.ts` |
+| Session and logout | `npx tsx scripts/session_blackbox.ts` | `npx tsx scripts/session_whitebox.ts` |
+| Restaurant discovery | `npx tsx scripts/restaurants_blackbox.ts` | `npx tsx scripts/restaurants_whitebox.ts` |
+| Menu | `npx tsx scripts/menu_blackbox.ts` | `npx tsx scripts/menu_whitebox.ts` |
+| Cart | `npx tsx scripts/cart_blackbox.ts` | `npx tsx scripts/cart_whitebox.ts` |
+| Credits | `npx tsx scripts/credits_blackbox.ts` | `npx tsx scripts/credits_whitebox.ts` |
+
+White box paths that only a database failure can reach are checked separately: stop the `OracleServiceXE` service in Windows, run `npx tsx scripts/outage_check.ts` with the dev server running, then start the service again.
+
+The tests create accounts whose IDs start with `TST` (and, for the menu, a temporary restaurant named `TST…`) and delete them, with their carts, when they finish. 
 
 ## Project structure
 
 ```
-app/          pages (page.tsx) and API endpoints (api/**/route.ts)
+app/          pages and API endpoints 
 lib/          database access, sessions and rate limiting
 hooks/        shared React hooks
 database/     schema and seed data
 scripts/      tests and utilities
-diagrams/     design diagrams
+diagrams/     design diagrams, and control flow graphs in diagrams/cfg/
 ```

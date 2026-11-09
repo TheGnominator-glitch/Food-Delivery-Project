@@ -1,5 +1,5 @@
 -- Foodie database schema: creates all 18 tables. Run once, in order, as the app's Oracle user.
--- FR1, FR3: user accounts; CC is the primary key
+-- FR1, FR3: user accounts; the national ID (cedula) is the primary key
 CREATE TABLE users (
     id VARCHAR2(20) PRIMARY KEY,          
     name VARCHAR2(120) NOT NULL,
@@ -13,7 +13,9 @@ CREATE TABLE users (
     credit_balance NUMBER(10,2) DEFAULT 0 NOT NULL,
     -- FR34, FR36: email notification consent (0 or 1)
     email_opt_in NUMBER(1) DEFAULT 0 NOT NULL CHECK (email_opt_in IN (0,1)),
-    created_at DATE DEFAULT SYSDATE NOT NULL
+    created_at DATE DEFAULT SYSDATE NOT NULL,
+    -- FR19, FR20: a balance can never go negative (schema change 003)
+    CONSTRAINT users_credit_balance_check CHECK (credit_balance >= 0)
 );
 
 -- FR10: restaurant categories
@@ -79,6 +81,8 @@ CREATE TABLE cart_item (
     user_id VARCHAR2(20) NOT NULL,
     menu_item_id  NUMBER NOT NULL,
     quantity NUMBER DEFAULT 1 NOT NULL,
+    -- FR14, FR16: from 1 to 20, the same limit as lib/constants.ts (schema change 002)
+    CONSTRAINT cart_item_quantity_check CHECK (quantity BETWEEN 1 AND 20),
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (menu_item_id) REFERENCES menu_item(id)
 );
@@ -159,6 +163,8 @@ CREATE TABLE credit_transaction (
     -- Only set for spend transactions
     order_id NUMBER,                                    
     transaction_date DATE DEFAULT SYSDATE NOT NULL,
+    -- FR25: always a positive amount; transaction_type says the direction (schema change 003)
+    CONSTRAINT credit_transaction_amount_check CHECK (amount > 0),
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (order_id) REFERENCES orders(id)
 );

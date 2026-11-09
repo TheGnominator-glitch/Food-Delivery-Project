@@ -109,11 +109,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // FR2: reject an email that already exists; emails are stored lowercase so case cannot create a duplicate
+    // FR2: reject an email that already exists, telling the user to log in (system flow); emails are stored lowercase so case cannot create a duplicate
     const normalizedEmail = String(email).toLowerCase();
     if (await emailExists(normalizedEmail)) {
       return NextResponse.json(
-        { error: "Email already exists" },
+        { error: "An account with this email already exists. Log in instead." },
         { status: 409 }
       );
     }
