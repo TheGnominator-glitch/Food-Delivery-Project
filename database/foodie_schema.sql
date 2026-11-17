@@ -122,6 +122,14 @@ CREATE TABLE orders (
     -- FR28: the road route from OSRM, as JSON
     route CLOB,
     created_at DATE DEFAULT SYSDATE NOT NULL,
+    -- FR28: the delivery point chosen on the Checkout map (schema change 004)
+    delivery_lat NUMBER(9,6) NOT NULL,
+    delivery_lng NUMBER(9,6) NOT NULL,
+    CONSTRAINT orders_delivery_point_check
+        CHECK (delivery_lat BETWEEN -90 AND 90 AND delivery_lng BETWEEN -180 AND 180),
+    -- FR18: the amounts always add up (schema change 004)
+    CONSTRAINT orders_amounts_check
+        CHECK (subtotal > 0 AND delivery_cost >= 0 AND total = subtotal + delivery_cost),
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
@@ -132,6 +140,9 @@ CREATE TABLE order_item (
     menu_item_id NUMBER NOT NULL,
     quantity  NUMBER NOT NULL,
     price_at_order NUMBER(10,2) NOT NULL,
+    -- FR14, FR23: the same quantity limit as the cart, and no negative prices (schema change 004)
+    CONSTRAINT order_item_quantity_check CHECK (quantity BETWEEN 1 AND 20),
+    CONSTRAINT order_item_price_check CHECK (price_at_order >= 0),
     FOREIGN KEY (order_id) REFERENCES orders(id),
     FOREIGN KEY (menu_item_id) REFERENCES menu_item(id)
 );
@@ -149,6 +160,9 @@ CREATE TABLE order_item_customization (
 CREATE TABLE order_item_extra (
     order_item_id NUMBER NOT NULL,
     extra_id NUMBER NOT NULL,
+    -- FR33: what the extra cost when ordered, so the breakdown stays correct (schema change 004)
+    price_at_order NUMBER(10,2) NOT NULL,
+    CONSTRAINT order_item_extra_price_check CHECK (price_at_order >= 0),
     PRIMARY KEY (order_item_id, extra_id),
     FOREIGN KEY (order_item_id) REFERENCES order_item(id),
     FOREIGN KEY (extra_id) REFERENCES extra(id)
@@ -178,7 +192,10 @@ CREATE TABLE notification_queue (
     retry_count NUMBER DEFAULT 0 NOT NULL,
     created_at DATE DEFAULT SYSDATE NOT NULL,
     sent_at DATE,
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    -- FR24, FR27: the order a notification is about, if any (schema change 004)
+    order_id NUMBER,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (order_id) REFERENCES orders(id)
 );
 
 -- FR5, FR7: login sessions; the id is the SHA-256 hash of the session token

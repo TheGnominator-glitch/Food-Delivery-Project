@@ -17,3 +17,12 @@ export const COP_PER_CREDIT = 1000;
 
 // FR22: an example card number, shown as the card field's placeholder
 export const TEST_CARD_NUMBER = "4242 4242 4242 4242";
+
+// FR18: the delivery cost and time estimate, from the straight-line distance through every pickup
+export const DELIVERY_BASE_FEE = 3; // credits
+export const DELIVERY_FEE_PER_KM = 1; // credits per started km
+export const PREP_MINUTES = 15;
+export const MINUTES_PER_KM = 3;
+
+// FR28: where the Checkout pin starts when the browser cannot give a location (Plaza de Bolívar, Pereira)
+export const DEFAULT_DELIVERY_POINT = { lat: 4.813333, lng: -75.696111 };

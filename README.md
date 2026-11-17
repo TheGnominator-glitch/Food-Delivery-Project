@@ -10,7 +10,7 @@ Customer's perspective only.
 - **Tailwind CSS 4**
 - **Oracle Database XE**, accessed with **node-oracledb** in thin mode
 - **bcrypt** 
-- Planned: **OSRM**, **Leaflet**, **Nodemailer** with Gmail SMTP 
+- Planned: **OSRM** (road routes), **Leaflet** (maps), **Nodemailer** with Gmail SMTP (email notifications)
 
 ## Prerequisites
 
@@ -66,7 +66,7 @@ Put the Oracle password in `.env.local`. Then fill in the Windows host IP:
 npx tsx scripts/ip_update.ts
 ```
 
-WSL can change that IP after a reboot so one might have to re-run this multiple times
+WSL can change that IP after a reboot so one might have to re run this multiple times
 
 ### 6. Check the connection
 
@@ -109,7 +109,7 @@ Run every script from the project root.
 Each module has a black box suite and a white box suite. Both need the dev server running, and the restaurant and menu suites also need the seed loaded. The control flow graph for each white box suite is in `diagrams/cfg/`.
 
 | Module | Black box | White box |
-|---|---|---|---|
+|---|---|---|
 | Signup | `npx tsx scripts/signup_blackbox.ts` | `npx tsx scripts/signup_whitebox.ts` |
 | Login | `npx tsx scripts/login_blackbox.ts` | `npx tsx scripts/login_whitebox.ts` |
 | Session and logout | `npx tsx scripts/session_blackbox.ts` | `npx tsx scripts/session_whitebox.ts` |
@@ -117,6 +117,7 @@ Each module has a black box suite and a white box suite. Both need the dev serve
 | Menu | `npx tsx scripts/menu_blackbox.ts` | `npx tsx scripts/menu_whitebox.ts` |
 | Cart | `npx tsx scripts/cart_blackbox.ts` | `npx tsx scripts/cart_whitebox.ts` |
 | Credits | `npx tsx scripts/credits_blackbox.ts` | `npx tsx scripts/credits_whitebox.ts` |
+| Checkout | `npx tsx scripts/checkout_blackbox.ts` | `npx tsx scripts/checkout_whitebox.ts` |
 
 White box paths that only a database failure can reach are checked separately: stop the `OracleServiceXE` service in Windows, run `npx tsx scripts/outage_check.ts` with the dev server running, then start the service again.
 

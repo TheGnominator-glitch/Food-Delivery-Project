@@ -180,6 +180,16 @@ export default function CartPage() {
             <span>{credits(cart.subtotal)}</span>
           </p>
         )}
+
+        {/* FR18: the Checkout button carries the whole cart to the Checkout page (system flow) */}
+        {cart && cart.items.length > 0 && (
+          <Link
+            href="/checkout"
+            className="mt-6 block rounded-lg bg-leaf py-3 text-center font-semibold text-white outline-none hover:opacity-90 focus-visible:ring-4 focus-visible:ring-mango/50"
+          >
+            Checkout
+          </Link>
+        )}
       </div>
     </main>
   );

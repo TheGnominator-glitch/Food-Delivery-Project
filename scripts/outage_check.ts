@@ -95,6 +95,14 @@ async function main() {
     }),
     "Something went wrong buying credits");
 
+  // FR18-FR20, FR23: checkout, path 1 of each handler (with a cookie, so the session lookup reaches the database)
+  check("CP-CQ-1", "GET /api/checkout: a database step throws -> 500",
+    await call("GET", "/api/checkout?lat=4.809243&lng=-75.760298", { token: FAKE_TOKEN }),
+    "Something went wrong loading checkout");
+  check("CP-CO-01", "POST /api/checkout: a database step throws -> 500",
+    await call("POST", "/api/checkout", { token: FAKE_TOKEN, body: { lat: 4.809243, lng: -75.760298, expectedTotal: 10 } }),
+    "Something went wrong placing your order");
+
   console.log(`\n${passed} passed, ${failed} failed, ${passed + failed} total`);
 }
 
